@@ -442,6 +442,13 @@
       "copiesRequested","feeWaived","exchangeRecentCertificate"
     ];
 
+    const dynamicFieldIds = [
+      "nameCorrectionKind","parentInfoKind","parentAction","applicantRoleParent","marriedAtBirth",
+      "parentToAdd","genderApplicant","hospitalErrorKind","childAgeBand","removeInfoKind"
+    ];
+
+    const dynamicState = {};
+
     function formatDate(value) {
       if (!value) return "—";
       const d = new Date(value + "T00:00:00");
@@ -451,9 +458,11 @@
 
     function value(id) {
       const el = document.getElementById(id);
-      if (!el) return "";
-      if (el.type === "checkbox") return el.checked;
-      return el.value || "";
+      if (el) {
+        if (el.type === "checkbox") return el.checked;
+        return el.value || "";
+      }
+      return dynamicState[id] || "";
     }
 
     function fullName(parts) {
@@ -497,78 +506,78 @@
           { value: "change_remove", label: "Change or remove a parent" }
         ]);
         html += `</div>`;
-      }
 
-      document.getElementById("conditionalFields").innerHTML = html;
-      attachLiveListeners(document.getElementById("conditionalFields"));
-
-      if (type === "parent_add_change_remove" && value("parentAction") === "add") {
-        document.getElementById("conditionalFields").innerHTML += `
-          <div class="grid-2" style="margin-top:14px;">
-            ${createSelect("applicantRoleParent", "Who is applying?", [
-              { value: "birth_parent", label: "Birth mother/parent" },
-              { value: "biological_parent", label: "Biological father/parent" },
-              { value: "second_parent", label: "Second parent (not biological father/parent)" }
-            ])}
-            ${createSelect("marriedAtBirth", "Married at the time of the child's birth?", [
-              { value: "yes", label: "Yes" },
-              { value: "yes_not_to_bio_father", label: "Yes, but not to the child's biological father" },
-              { value: "no", label: "No" }
-            ])}
-            <div class="field full">
-              <label for="parentToAdd">Who is being added?</label>
-              <select id="parentToAdd">
-                <option value="">Choose one</option>
-                <option value="spouse">Spouse at time of birth</option>
-                <option value="biological_parent">Biological father/parent</option>
-                <option value="second_parent">Second parent (not biological father/parent)</option>
-                <option value="myself">Myself</option>
-              </select>
-            </div>
-          </div>`;
-        attachLiveListeners(document.getElementById("conditionalFields"));
+        if (value("parentAction") === "add") {
+          html += `
+            <div class="grid-2" style="margin-top:14px;">
+              ${createSelect("applicantRoleParent", "Who is applying?", [
+                { value: "birth_parent", label: "Birth mother/parent" },
+                { value: "biological_parent", label: "Biological father/parent" },
+                { value: "second_parent", label: "Second parent (not biological father/parent)" }
+              ])}
+              ${createSelect("marriedAtBirth", "Married at the time of the child's birth?", [
+                { value: "yes", label: "Yes" },
+                { value: "yes_not_to_bio_father", label: "Yes, but not to the child's biological father" },
+                { value: "no", label: "No" }
+              ])}
+              <div class="field full">
+                <label for="parentToAdd">Who is being added?</label>
+                <select id="parentToAdd">
+                  <option value="">Choose one</option>
+                  <option value="spouse">Spouse at time of birth</option>
+                  <option value="biological_parent">Biological father/parent</option>
+                  <option value="second_parent">Second parent (not biological father/parent)</option>
+                  <option value="myself">Myself</option>
+                </select>
+              </div>
+            </div>`;
+        }
       }
 
       if (type === "gender_marker") {
-        document.getElementById("conditionalFields").innerHTML += createSelect("genderApplicant", "Who is the gender-marker request for?", [
+        html += createSelect("genderApplicant", "Who is the gender-marker request for?", [
           { value: "self", label: "Myself (18 or older)" },
           { value: "child", label: "My child (younger than 18)" }
         ]);
-        attachLiveListeners(document.getElementById("conditionalFields"));
       }
 
       if (type === "hospital_error") {
-        document.getElementById("conditionalFields").innerHTML += createSelect("hospitalErrorKind", "What kind of hospital issue is this?", [
+        html += createSelect("hospitalErrorKind", "What kind of hospital issue is this?", [
           { value: "add_first_middle_name", label: "Add child's first and middle name" },
           { value: "child_error", label: "Correct hospital error on a child's certificate" },
           { value: "adult_error", label: "Correct hospital error on my own certificate" }
         ]);
-        attachLiveListeners(document.getElementById("conditionalFields"));
 
         const kind = value("hospitalErrorKind");
         if (kind === "add_first_middle_name") {
-          document.getElementById("conditionalFields").innerHTML += createSelect("childAgeBand", "Child's age right now", [
+          html += createSelect("childAgeBand", "Child's age right now", [
             { value: "0_60_days", label: "60 days or younger" },
             { value: "61_days_to_under_1", label: "Older than 60 days but younger than 1 year" }
           ]);
-          attachLiveListeners(document.getElementById("conditionalFields"));
         }
         if (kind === "child_error") {
-          document.getElementById("conditionalFields").innerHTML += createSelect("childAgeBand", "Child's age right now", [
+          html += createSelect("childAgeBand", "Child's age right now", [
             { value: "under_1", label: "Younger than 1 year" },
             { value: "1_to_under_18", label: "Older than 1 year but younger than 18" }
           ]);
-          attachLiveListeners(document.getElementById("conditionalFields"));
         }
       }
 
       if (type === "remove_info") {
-        document.getElementById("conditionalFields").innerHTML += createSelect("removeInfoKind", "What do you want to remove?", [
+        html += createSelect("removeInfoKind", "What do you want to remove?", [
           { value: "general", label: "General information from the birth certificate" },
           { value: "physician", label: "A physician's name" }
         ]);
-        attachLiveListeners(document.getElementById("conditionalFields"));
       }
+
+      const container = document.getElementById("conditionalFields");
+      container.innerHTML = html;
+      attachLiveListeners(container);
+
+      dynamicFieldIds.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el && dynamicState[id]) el.value = dynamicState[id];
+      });
     }
 
     function getCorrections() {
@@ -934,6 +943,7 @@
     }
 
     function updateEverything() {
+      syncDynamicState();
       renderConditionalFields();
       renderResults(computeInstructions());
     }
@@ -947,11 +957,19 @@
       });
     }
 
+    function syncDynamicState() {
+      dynamicFieldIds.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) dynamicState[id] = el.value || "";
+      });
+    }
+
     function resetAll() {
       document.querySelectorAll("input, select, textarea").forEach(el => {
         if (el.type === "checkbox") el.checked = false;
         else el.value = "";
       });
+      Object.keys(dynamicState).forEach((key) => delete dynamicState[key]);
       document.getElementById("copiesRequested").value = "0";
       document.getElementById("correctionsContainer").innerHTML = "";
       addCorrectionLine();
