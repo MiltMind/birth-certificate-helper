@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NYC Birth Certificate Correction Helper</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #475569;
+      --line: #cbd5e1;
+      --soft: #e2e8f0;
+      --accent: #0f172a;
+      --warn-bg: #fffbeb;
+      --warn-line: #fcd34d;
+      --ok-bg: #f8fafc;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    h1, h2, h3 { margin: 0; }
+    h1 { font-size: 2rem; }
+    h2 { font-size: 1.2rem; margin-bottom: 16px; }
+    h3 { font-size: 1rem; }
+
+    p { margin: 0; }
+
+    .badges {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--soft);
+      font-size: 0.85rem;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .alert {
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-line);
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+      margin-bottom: 20px;
+    }
+
+    .sticky {
+      position: sticky;
+      top: 20px;
+    }
+
+    .grid-3, .grid-2 {
+      display: grid;
+      gap: 14px;
+    }
+
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+
+    .full { grid-column: 1 / -1; }
+
+    .field label {
+      display: block;
+      font-size: 0.92rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 11px 12px;
+      font-size: 0.95rem;
+      background: white;
+      color: var(--text);
+    }
+
+    .field textarea {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    .separator {
+      height: 1px;
+      background: var(--soft);
+      margin: 18px 0;
+    }
+
+    .subtle {
+      color: var(--muted);
+    }
+
+    .correction-line {
+      border: 1px dashed var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      margin-top: 10px;
+    }
+
+    .result-box, .doc-box, .info-box {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      background: #fff;
+    }
+
+    .result-box { margin-bottom: 14px; }
+    .doc-box { background: var(--ok-bg); margin-top: 10px; }
+    .info-box { background: #f8fafc; }
+
+    ol, ul {
+      margin: 8px 0 0 20px;
+      padding: 0;
+    }
+
+    .small { font-size: 0.92rem; }
+
+    .checkbox-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+
+    .checkbox-row input { margin-top: 3px; }
+
+    .print-summary {
+      display: none;
+      background: white;
+    }
+
+    .print-block {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px;
+      margin-bottom: 18px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .print-line {
+      border: 1px solid var(--soft);
+      border-radius: 14px;
+      padding: 12px;
+      margin-top: 8px;
+    }
+
+    .footer-note {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      .sticky { position: static; }
+      .grid-3, .grid-2 { grid-template-columns: 1fr; }
+      .hero { flex-direction: column; }
+    }
+
+    @media print {
+      body { background: white; }
+      .screen-only { display: none !important; }
+      .print-summary { display: block !important; }
+      .container { max-width: none; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="screen-only">
+      <div class="hero">
+        <div>
+          <div class="badges">
+            <span class="badge">Beginner-friendly</span>
+            <span class="badge">Single file</span>
+            <span class="badge">Free to host</span>
+          </div>
+          <h1>NYC Birth Certificate Correction Helper</h1>
+          <p class="subtle" style="margin-top:10px; max-width: 800px;">
+            Fill in the same core information requested by the NYC correction form, get instructions based on the form logic, and print a clean summary.
+          </p>
+        </div>
+        <div class="button-row">
+          <button class="primary" id="printBtn">Print</button>
+          <button id="resetBtn">Reset form</button>
+        </div>
+      </div>
+
+      <div class="alert small">
+        This helper is based on the NYC Department of Health correction form. It is meant to make the process easier to understand, but users should still compare their final printout against the official NYC requirements before mailing anything.
+      </div>
+    </div>
+
+    <div class="print-summary" id="printSummary"></div>
+
+    <div class="layout screen-only">
+      <div>
+        <section class="card">
+          <h2>Section 1: What is your name?</h2>
+          <div class="grid-3">
+            <div class="field"><label for="applicantFirstName">First name</label><input id="applicantFirstName"></div>
+            <div class="field"><label for="applicantMiddleName">Middle name</label><input id="applicantMiddleName"></div>
+            <div class="field"><label for="applicantLastName">Last name</label><input id="applicantLastName"></div>
+            <div class="field full"><label for="mailingAddress">Mailing address</label><input id="mailingAddress"></div>
+            <div class="field"><label for="apartmentNumber">Apartment number</label><input id="apartmentNumber"></div>
+            <div class="field"><label for="city">City</label><input id="city"></div>
+            <div class="field"><label for="state">State</label><input id="state"></div>
+            <div class="field"><label for="zipCode">ZIP code</label><input id="zipCode"></div>
+            <div class="field"><label for="primaryPhone">Primary phone</label><input id="primaryPhone"></div>
+            <div class="field"><label for="alternatePhone">Alternate phone</label><input id="alternatePhone"></div>
+            <div class="field full"><label for="email">Email</label><input id="email"></div>
+            <div class="field full">
+              <label for="maritalStatus">Marital partnership status</label>
+              <select id="maritalStatus">
+                <option value="">Select one</option>
+                <option>Single/never married</option>
+                <option>Married</option>
+                <option>Separated</option>
+                <option>Divorced</option>
+                <option>Widowed</option>
+                <option>Registered domestic partnership</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Section 2: Birth certificate information</h2>
+          <div class="grid-3">
+            <div class="field full"><label for="certificateNumber">Birth certificate number</label><input id="certificateNumber" placeholder="156-__-______"></div>
+            <div class="field"><label for="certFirstName">Name currently on the certificate: first name</label><input id="certFirstName"></div>
+            <div class="field"><label for="certMiddleName">Middle name</label><input id="certMiddleName"></div>
+            <div class="field"><label for="certLastName">Last name</label><input id="certLastName"></div>
+            <div class="field"><label for="dateOfBirth">Date of birth</label><input type="date" id="dateOfBirth"></div>
+            <div class="field"><label for="sex">Sex</label>
+              <select id="sex">
+                <option value="">Select one</option>
+                <option>Male</option>
+                <option>Female</option>
+                <option>X</option>
+              </select>
+            </div>
+            <div></div>
+            <div class="field"><label for="motherFirstName">Mother's maiden first name</label><input id="motherFirstName"></div>
+            <div class="field"><label for="motherLastName">Mother's maiden last name</label><input id="motherLastName"></div>
+            <div class="field full"><label for="placeOfBirth">Place of birth as currently shown</label><textarea id="placeOfBirth"></textarea></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Section 3: What do you want to correct?</h2>
+          <div class="field">
+            <label for="correctionType">Type of correction</label>
+            <select id="correctionType">
+              <option value="">Choose the correction type</option>
+              <option value="name_add_correct">Add or correct a name on a birth certificate</option>
+              <option value="name_change">Change your name or your child's name on a birth certificate</option>
+              <option value="parent_info">Correct parent information on a birth certificate</option>
+              <option value="parent_add_change_remove">Add, change, or remove a parent on a birth certificate</option>
+              <option value="gender_marker">Change sex/gender marker on a birth certificate</option>
+              <option value="hospital_error">Correct an error made by the hospital</option>
+              <option value="remove_info">Remove information from the birth record</option>
+            </select>
+          </div>
+
+          <div id="conditionalFields"></div>
+
+          <div class="separator"></div>
+          <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+            <h3>Correction lines</h3>
+            <button type="button" id="addCorrectionBtn">Add line</button>
+          </div>
+          <div id="correctionsContainer"></div>
+        </section>
+
+        <section class="card">
+          <h2>Section 4: Second parent information</h2>
+          <div class="grid-3">
+            <div class="field"><label for="secondParentFirstName">Second parent's first name</label><input id="secondParentFirstName"></div>
+            <div class="field"><label for="secondParentMiddleName">Middle name</label><input id="secondParentMiddleName"></div>
+            <div class="field"><label for="secondParentLastName">Last name</label><input id="secondParentLastName"></div>
+            <div class="field"><label for="secondParentCountryOfBirth">Country of birth</label><input id="secondParentCountryOfBirth"></div>
+            <div class="field"><label for="secondParentSex">Sex</label>
+              <select id="secondParentSex"><option value="">Select one</option><option>Male</option><option>Female</option><option>X</option></select>
+            </div>
+            <div></div>
+            <div class="field"><label for="secondParentDob">Date of birth</label><input type="date" id="secondParentDob"></div>
+            <div class="field"><label for="secondParentAgeAtBirth">Age at time of child's birth</label><input id="secondParentAgeAtBirth"></div>
+            <div class="field"><label for="childLastNameAfterUpdate">Child's last name as it will appear</label><input id="childLastNameAfterUpdate"></div>
+            <div class="field"><label for="secondParentSignatureName">Second parent signature name</label><input id="secondParentSignatureName"></div>
+            <div class="field"><label for="secondParentSignatureDate">Second parent signature date</label><input type="date" id="secondParentSignatureDate"></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Section 5: Sign your application</h2>
+          <div class="grid-2">
+            <div class="field"><label for="signerMotherParentGuardian">Mother/parent/legal guardian signature name</label><input id="signerMotherParentGuardian"></div>
+            <div class="field"><label for="signerFatherParentGuardian">Father/parent/legal guardian signature name</label><input id="signerFatherParentGuardian"></div>
+            <div class="field"><label for="signerApplicant">Person completing this application</label><input id="signerApplicant"></div>
+            <div class="field"><label for="signerAdultPerson">Adult person requesting correction of own certificate</label><input id="signerAdultPerson"></div>
+            <div class="field full"><label for="signatureDate">Signature date</label><input type="date" id="signatureDate"></div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="card sticky">
+        <h2>Instructions and results</h2>
+        <div id="resultsArea" class="small subtle">Choose a correction type and the helper will show the instructions based on the official form logic.</div>
+
+        <div class="separator"></div>
+
+        <h3>Fee estimate</h3>
+        <div class="field" style="margin-top:12px;">
+          <label for="copiesRequested">How many corrected certificates do you want? (0 to 3)</label>
+          <select id="copiesRequested">
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+          </select>
+        </div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="feeWaived">
+          <label for="feeWaived" class="small">Use fee waiver estimate when the form says there is no $40 correction fee for this path.</label>
+        </div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="exchangeRecentCertificate">
+          <label for="exchangeRecentCertificate" class="small">I am enclosing a certified copy of a certificate purchased within the past three months and want to exchange it for a corrected certificate.</label>
+        </div>
+
+        <div class="info-box small" style="margin-top:12px;" id="feeBox"></div>
+
+        <div class="separator"></div>
+
+        <h3>General reminders</h3>
+        <ul class="small" id="notesArea"></ul>
+        <div class="footer-note">This site does not save data. Everything stays in the browser unless the user prints it.</div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const documentDescriptions = {
+      "1": "Immunization record showing child's first name, date of birth, name of parent listed on the birth certificate, and the health care facility's stamp. Must be at least 10 years old.",
+      "2": "First census record taken after birth (federal or state).",
+      "3": "Letter from a physician showing date of birth and correct name, on letterhead, showing treatment 10 or more years ago and including first and last visit dates.",
+      "4": "Letter from an elementary, middle, or high school attended, showing date of birth and correct name, and dates registered. Must be from 10 or more years ago.",
+      "5": "Letter or document from a religious institution showing date of birth and correct name, on official letterhead, at least 10 years old.",
+      "6": "Life insurance policy showing date of birth and correct name. Must be at least 10 years old.",
+      "7": "Original birth certificate of the parent whose information you would like to correct.",
+      "7a": "Birth certificate of parent showing the correct spelling of last name. Must be dated prior to the date of birth.",
+      "8": "Passport of the parent showing the correct spelling of last name. Must be issued prior to the date of birth.",
+      "9": "Parent's original marriage record/certificate if parents were married before the child was born. Can only be used to correct a last name.",
+      "10": "Parent's U.S. Naturalization Certificate. The information must match the parent information on the birth certificate, and the parent last name must match the requested correction. Must be dated prior to the date of birth.",
+      "11": "Birth certificate of an older sister or brother with the same parent.",
+      "12": "Certified legal name change court order. It must include the date of birth, place of birth, and certificate number.",
+      "13": "Any of the following: birth certificate of the parent whose information you want to correct; birth certificate of an older sister or brother with the same parent; religious institution record showing date of birth, correct name, and parent's correct name(s); naturalization certificate or marriage record before the child was born, which may be used to correct last name only."
+    };
+
+    const allIds = [
+      "applicantFirstName","applicantMiddleName","applicantLastName","mailingAddress","apartmentNumber","city","state","zipCode",
+      "primaryPhone","alternatePhone","email","maritalStatus","certificateNumber","certFirstName","certMiddleName","certLastName",
+      "dateOfBirth","sex","motherFirstName","motherLastName","placeOfBirth","correctionType","secondParentFirstName",
+      "secondParentMiddleName","secondParentLastName","secondParentCountryOfBirth","secondParentSex","secondParentDob",
+      "secondParentAgeAtBirth","childLastNameAfterUpdate","secondParentSignatureName","secondParentSignatureDate",
+      "signerMotherParentGuardian","signerFatherParentGuardian","signerApplicant","signerAdultPerson","signatureDate",
+      "copiesRequested","feeWaived","exchangeRecentCertificate"
+    ];
+
+    function formatDate(value) {
+      if (!value) return "—";
+      const d = new Date(value + "T00:00:00");
+      if (Number.isNaN(d.getTime())) return value;
+      return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    }
+
+    function value(id) {
+      const el = document.getElementById(id);
+      if (!el) return "";
+      if (el.type === "checkbox") return el.checked;
+      return el.value || "";
+    }
+
+    function fullName(parts) {
+      return parts.filter(Boolean).join(" ") || "—";
+    }
+
+    function createSelect(id, label, options) {
+      return `
+        <div class="field">
+          <label for="${id}">${label}</label>
+          <select id="${id}">
+            <option value="">Choose one</option>
+            ${options.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join("")}
+          </select>
+        </div>
+      `;
+    }
+
+    function renderConditionalFields() {
+      const type = value("correctionType");
+      let html = "";
+
+      if (type === "name_add_correct") {
+        html += createSelect("nameCorrectionKind", "Which kind of name correction is this?", [
+          { value: "first_middle", label: "Add or correct first or middle name" },
+          { value: "last_name", label: "Correct last name" }
+        ]);
+      }
+
+      if (type === "parent_info") {
+        html += createSelect("parentInfoKind", "What kind of parent information correction is this?", [
+          { value: "general", label: "Parent name / date of birth / place of birth" },
+          { value: "last_name", label: "Parent last name" }
+        ]);
+      }
+
+      if (type === "parent_add_change_remove") {
+        html += `<div class="grid-2">`;
+        html += createSelect("parentAction", "What are you trying to do?", [
+          { value: "add", label: "Add a parent" },
+          { value: "change_remove", label: "Change or remove a parent" }
+        ]);
+        html += `</div>`;
+      }
+
+      document.getElementById("conditionalFields").innerHTML = html;
+      attachLiveListeners(document.getElementById("conditionalFields"));
+
+      if (type === "parent_add_change_remove" && value("parentAction") === "add") {
+        document.getElementById("conditionalFields").innerHTML += `
+          <div class="grid-2" style="margin-top:14px;">
+            ${createSelect("applicantRoleParent", "Who is applying?", [
+              { value: "birth_parent", label: "Birth mother/parent" },
+              { value: "biological_parent", label: "Biological father/parent" },
+              { value: "second_parent", label: "Second parent (not biological father/parent)" }
+            ])}
+            ${createSelect("marriedAtBirth", "Married at the time of the child's birth?", [
+              { value: "yes", label: "Yes" },
+              { value: "yes_not_to_bio_father", label: "Yes, but not to the child's biological father" },
+              { value: "no", label: "No" }
+            ])}
+            <div class="field full">
+              <label for="parentToAdd">Who is being added?</label>
+              <select id="parentToAdd">
+                <option value="">Choose one</option>
+                <option value="spouse">Spouse at time of birth</option>
+                <option value="biological_parent">Biological father/parent</option>
+                <option value="second_parent">Second parent (not biological father/parent)</option>
+                <option value="myself">Myself</option>
+              </select>
+            </div>
+          </div>`;
+        attachLiveListeners(document.getElementById("conditionalFields"));
+      }
+
+      if (type === "gender_marker") {
+        document.getElementById("conditionalFields").innerHTML += createSelect("genderApplicant", "Who is the gender-marker request for?", [
+          { value: "self", label: "Myself (18 or older)" },
+          { value: "child", label: "My child (younger than 18)" }
+        ]);
+        attachLiveListeners(document.getElementById("conditionalFields"));
+      }
+
+      if (type === "hospital_error") {
+        document.getElementById("conditionalFields").innerHTML += createSelect("hospitalErrorKind", "What kind of hospital issue is this?", [
+          { value: "add_first_middle_name", label: "Add child's first and middle name" },
+          { value: "child_error", label: "Correct hospital error on a child's certificate" },
+          { value: "adult_error", label: "Correct hospital error on my own certificate" }
+        ]);
+        attachLiveListeners(document.getElementById("conditionalFields"));
+
+        const kind = value("hospitalErrorKind");
+        if (kind === "add_first_middle_name") {
+          document.getElementById("conditionalFields").innerHTML += createSelect("childAgeBand", "Child's age right now", [
+            { value: "0_60_days", label: "60 days or younger" },
+            { value: "61_days_to_under_1", label: "Older than 60 days but younger than 1 year" }
+          ]);
+          attachLiveListeners(document.getElementById("conditionalFields"));
+        }
+        if (kind === "child_error") {
+          document.getElementById("conditionalFields").innerHTML += createSelect("childAgeBand", "Child's age right now", [
+            { value: "under_1", label: "Younger than 1 year" },
+            { value: "1_to_under_18", label: "Older than 1 year but younger than 18" }
+          ]);
+          attachLiveListeners(document.getElementById("conditionalFields"));
+        }
+      }
+
+      if (type === "remove_info") {
+        document.getElementById("conditionalFields").innerHTML += createSelect("removeInfoKind", "What do you want to remove?", [
+          { value: "general", label: "General information from the birth certificate" },
+          { value: "physician", label: "A physician's name" }
+        ]);
+        attachLiveListeners(document.getElementById("conditionalFields"));
+      }
+    }
+
+    function getCorrections() {
+      return [...document.querySelectorAll(".correction-line")].map((line) => ({
+        field: line.querySelector("[data-key='field']").value,
+        currentValue: line.querySelector("[data-key='currentValue']").value,
+        newValue: line.querySelector("[data-key='newValue']").value
+      }));
+    }
+
+    function addCorrectionLine(data = { field: "", currentValue: "", newValue: "" }) {
+      const container = document.getElementById("correctionsContainer");
+      const div = document.createElement("div");
+      div.className = "correction-line";
+      div.innerHTML = `
+        <div class="grid-3">
+          <div class="field"><label>What do you want to correct?</label><input data-key="field" value="${escapeHtml(data.field)}"></div>
+          <div class="field"><label>What is currently listed?</label><input data-key="currentValue" value="${escapeHtml(data.currentValue)}"></div>
+          <div class="field"><label>What should it say?</label><input data-key="newValue" value="${escapeHtml(data.newValue)}"></div>
+        </div>
+        <div style="margin-top:10px;"><button type="button" class="removeCorrectionBtn">Remove this line</button></div>
+      `;
+      container.appendChild(div);
+      attachLiveListeners(div);
+      div.querySelector(".removeCorrectionBtn").addEventListener("click", () => {
+        if (document.querySelectorAll(".correction-line").length > 1) {
+          div.remove();
+          updateEverything();
+        }
+      });
+    }
+
+    function escapeHtml(text) {
+      return (text || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function computeInstructions() {
+      const form = collectForm();
+      const results = [];
+      const notes = [];
+      const certificateFee = form.feeWaived ? 0 : Number(form.copiesRequested || 0) * 15;
+      const processingFee = form.feeWaived ? 0 : 40;
+      const totalFee = processingFee + certificateFee;
+
+      notes.push("This website is an unofficial helper. The actual application and requirements come from the NYC Department of Health correction form.");
+      notes.push("Only the person named on the certificate who is at least 18 years old, or a parent/legal guardian if the person is younger than 18, can apply.");
+      notes.push("The person named on the certificate must have been born in one of the five boroughs of New York City.");
+      notes.push("All forms should be filled out in English.");
+      notes.push("You must submit a current, signed photo ID. If the names of both parents are on the record, both must sign and submit ID when required by the form.");
+      notes.push("For mailed applications, photocopies of ID must be clear and include the front and back.");
+      notes.push("Original documents on letterhead or certified copies are required. Notarized copies, ordinary photocopies, and altered documents are not accepted.");
+      notes.push("If a required document is not in English, an official translation is needed.");
+      if (form.exchangeRecentCertificate) {
+        notes.push("User says they are enclosing a certified copy of a certificate purchased within the past three months for exchange.");
+      }
+
+      if (form.correctionType === "name_add_correct") {
+        if (form.nameCorrectionKind === "first_middle") {
+          results.push({ title: "Table A: Add or correct first or middle name", steps: [
+            "Complete the application.",
+            "Submit one of these document sets: 1, 2, 3, 4, 5, or 6.",
+            "For documents 1 to 6, the document generally must have been established before the child's 7th birthday or be at least 10 years old.",
+            "The document should also include the child's name, listed date of birth, and parent name(s)."
+          ], docs: ["1","2","3","4","5","6"] });
+        } else if (form.nameCorrectionKind === "last_name") {
+          results.push({ title: "Table A: Correct last name", steps: [
+            "Complete the application.",
+            "Submit one of these supporting document paths: 7a, 8, 9, 10, or 11.",
+            "All documents must be dated before the date of birth where the form says that requirement applies."
+          ], docs: ["7a","8","9","10","11"] });
+        } else {
+          results.push({ title: "Choose the name correction type", steps: ["Pick whether you are adding/correcting a first or middle name, or correcting a last name, so the website can show the right supporting documents."], docs: [] });
+        }
+      }
+
+      if (form.correctionType === "name_change") {
+        results.push({ title: "Table A: Legal name change", steps: [
+          "Complete the application.",
+          "Obtain and submit a certified legal name change court order.",
+          "The court order must include the date of birth, place of birth, and certificate number."
+        ], docs: ["12"] });
+      }
+
+      if (form.correctionType === "parent_info") {
+        if (form.parentInfoKind === "general") {
+          results.push({ title: "Table A: Correct parent information", steps: [
+            "Complete the application.",
+            "Submit 7, 9, or 13 as your supporting document path."
+          ], docs: ["7","9","13"] });
+        } else if (form.parentInfoKind === "last_name") {
+          results.push({ title: "Table A: Correct parent's last name", steps: [
+            "Complete the application.",
+            "Submit one of these supporting document paths: 7a, 8, 9, 10, or 11.",
+            "All documents must be dated before the date of birth where required by the form."
+          ], docs: ["7a","8","9","10","11"] });
+        } else {
+          results.push({ title: "Choose the parent information correction type", steps: ["Pick whether this is a general parent information correction or a parent last-name correction so the right document list can be shown."], docs: [] });
+        }
+      }
+
+      if (form.correctionType === "parent_add_change_remove") {
+        if (form.parentAction === "add") {
+          if (form.applicantRoleParent === "birth_parent" && form.marriedAtBirth === "yes" && form.parentToAdd === "spouse") {
+            results.push({ title: "Table B: Add spouse as second parent", steps: [
+              "Complete Section 4 with second parent information.",
+              "Submit certified marriage records and any other required certified records.",
+              "If relevant, include divorce records or death certificate records.",
+              "Unless there is a court order, both parents must sign when adding a second parent.",
+              "There is no $40 correction fee for adding the spouse, but there is a $15 fee for each corrected certificate."
+            ], docs: [] });
+          } else if (form.applicantRoleParent === "birth_parent" && form.marriedAtBirth === "yes_not_to_bio_father" && form.parentToAdd === "biological_parent") {
+            results.push({ title: "Table B: Add biological father/parent when birth parent was married, but not to that biological parent", steps: [
+              "Go to Family Court or New York State Supreme Court.",
+              "Ask for an Order of Parentage/Filiation.",
+              "Request that the city, state, date of birth, and sex of the parent to be added are specified on the order.",
+              "There is no $40 correction fee to add the biological parent, but there is a $15 fee for each corrected certificate."
+            ], docs: [] });
+          } else if (form.applicantRoleParent === "birth_parent" && form.marriedAtBirth === "no" && form.parentToAdd === "biological_parent") {
+            results.push({ title: "Table B: Add biological father/parent when birth parent was not married at birth", steps: [
+              "Complete an Acknowledgment of Parentage (AOP) form, or",
+              "Go to Family Court or New York State Supreme Court and ask for an Order of Parentage/Filiation.",
+              "Ask that the city, state, date of birth, and sex of the parent to be added are specified on the order.",
+              "There is no $40 correction fee to add the biological parent, but there is a $15 fee for each corrected certificate."
+            ], docs: [] });
+          } else if (form.applicantRoleParent === "birth_parent" && form.marriedAtBirth === "no" && form.parentToAdd === "second_parent") {
+            results.push({ title: "Table B: Add second parent (not biological father/parent)", steps: [
+              "Complete an Acknowledgment of Parentage (AOP) form, or",
+              "Go to Family Court or New York State Supreme Court and ask for an Order of Parentage/Filiation or Order of Adoption.",
+              "Ask that the city, state, date of birth, and sex of the parent to be added are specified on the order.",
+              "There is no $40 correction fee to add a second parent, but there is a $15 fee for each corrected certificate.",
+              "There is a $40 correction fee for Orders of Adoption."
+            ], docs: [] });
+          } else if (form.applicantRoleParent === "biological_parent" && form.parentToAdd === "myself") {
+            results.push({ title: "Table B: Biological father/parent adding self", steps: [
+              "Follow the instructions that apply to the birth parent's situation above, then complete the matching path.",
+              "Consent of the birth mother/parent may be required."
+            ], docs: [] });
+          } else if (form.applicantRoleParent === "second_parent" && form.parentToAdd === "myself") {
+            results.push({ title: "Table B: Second parent adding self", steps: [
+              "If the birth parent was married at the time of birth and you were that spouse, follow the spouse instructions.",
+              "Otherwise, go to Family Court or New York State Supreme Court and ask for an Order of Parentage/Filiation or Order of Adoption.",
+              "Ask that the city, state, date of birth, and sex of the parent to be added are specified on the order.",
+              "Fees are the same as the second-parent path above."
+            ], docs: [] });
+          } else {
+            results.push({ title: "Table B needs one more detail", steps: ["Pick who is applying, whether the birth parent was married at the time of birth, and which parent is being added so the website can show the exact instructions."], docs: [] });
+          }
+        }
+        if (form.parentAction === "change_remove") {
+          results.push({ title: "Table B: Change or remove a parent", steps: [
+            "Go to Family Court or New York State Supreme Court to establish parentage.",
+            "Ask for an Order of Parentage to remove or change a parent."
+          ], docs: [] });
+        }
+      }
+
+      if (form.correctionType === "gender_marker") {
+        if (form.genderApplicant === "self") {
+          results.push({ title: "Table C: Change gender marker for yourself", steps: [
+            "Complete the application.",
+            "Complete the self-attestation form for a person age 18 or older.",
+            "Use the official NYC self-attestation process referenced by the form."
+          ], docs: [] });
+        } else if (form.genderApplicant === "child") {
+          results.push({ title: "Table C: Change gender marker for a child younger than 18", steps: [
+            "Complete the application.",
+            "Complete the self-attestation form for minors.",
+            "Use the official NYC minor self-attestation process referenced by the form."
+          ], docs: [] });
+        } else {
+          results.push({ title: "Choose who the gender-marker request is for", steps: ["Pick whether the request is for yourself or for a child younger than 18."], docs: [] });
+        }
+      }
+
+      if (form.correctionType === "hospital_error") {
+        if (form.hospitalErrorKind === "add_first_middle_name") {
+          if (form.childAgeBand === "0_60_days") {
+            results.push({ title: "Table D: Add child's first and middle name, child is 60 days or younger", steps: [
+              "Submit this application with valid ID for the parent(s) listed on the certificate.",
+              "No fee."
+            ], docs: [] });
+          } else if (form.childAgeBand === "61_days_to_under_1") {
+            results.push({ title: "Table D: Add child's first and middle name, child is older than 60 days but younger than 1 year", steps: [
+              "Submit this application with valid ID for the parent(s) listed on the certificate.",
+              "Regular fee applies."
+            ], docs: [] });
+          } else {
+            results.push({ title: "Choose the child's age", steps: ["For this hospital-error path, pick whether the child is 60 days or younger, or older than 60 days but younger than 1 year."], docs: [] });
+          }
+        }
+
+        if (form.hospitalErrorKind === "child_error") {
+          if (form.childAgeBand === "under_1") {
+            results.push({ title: "Table D: Hospital error on child's birth certificate, child younger than 1 year", steps: [
+              "Return to the hospital where the child was born.",
+              "Bring this application and ask the hospital to submit a correction electronically to the NYC Health Department.",
+              "No fee."
+            ], docs: [] });
+          } else if (form.childAgeBand === "1_to_under_18") {
+            results.push({ title: "Table D: Hospital error on child's birth certificate, child older than 1 year but younger than 18", steps: [
+              "Request a letter from the hospital where the child was born stating that an error was made.",
+              "The letter must include the child's name, date of birth, the incorrect information as it appears now, the correct information, and the names of the parent(s) listed on the certificate."
+            ], docs: [] });
+          } else {
+            results.push({ title: "Choose the child's age", steps: ["For this hospital-error path, pick whether the child is younger than 1 year, or younger than 18 but older than 1 year."], docs: [] });
+          }
+        }
+
+        if (form.hospitalErrorKind === "adult_error") {
+          results.push({ title: "Table D: Hospital error on your own birth certificate", steps: [
+            "This path applies only to sex, date and time of birth, or place of birth.",
+            "Request a letter from the hospital where you were born stating that an error was made.",
+            "The letter must include your name, date of birth, the incorrect information as it appears now, and the correct information.",
+            "Also submit one of the following: hospital worksheet, log journal, or birth records completed at the time of birth."
+          ], docs: [] });
+        }
+      }
+
+      if (form.correctionType === "remove_info") {
+        if (form.removeInfoKind === "general") {
+          results.push({ title: "Table E: Remove information from a birth certificate", steps: [
+            "Go to New York State Supreme Court.",
+            "Request a court order to remove the information.",
+            "If it is actually a hospital error, follow Table D instead."
+          ], docs: [] });
+        } else if (form.removeInfoKind === "physician") {
+          results.push({ title: "Table E: Remove a physician's name", steps: [
+            "A physician's name can be removed if the physician's medical license has been surrendered or revoked by the New York State Department of Health, Office of Professional Medical Conduct.",
+            "Follow the NYC instructions for certificate corrections and physician-name removal.",
+            "For questions, the form lists 311 in NYC or 212-639-9675 outside NYC."
+          ], docs: [] });
+        } else {
+          results.push({ title: "Choose what you want removed", steps: ["Pick whether you want to remove general information or a physician's name."], docs: [] });
+        }
+      }
+
+      return { form, results, notes, fees: { processingFee, certificateFee, totalFee } };
+    }
+
+    function collectForm() {
+      const form = {};
+      allIds.forEach(id => form[id] = value(id));
+      form.nameCorrectionKind = value("nameCorrectionKind");
+      form.parentInfoKind = value("parentInfoKind");
+      form.parentAction = value("parentAction");
+      form.applicantRoleParent = value("applicantRoleParent");
+      form.marriedAtBirth = value("marriedAtBirth");
+      form.parentToAdd = value("parentToAdd");
+      form.genderApplicant = value("genderApplicant");
+      form.hospitalErrorKind = value("hospitalErrorKind");
+      form.childAgeBand = value("childAgeBand");
+      form.removeInfoKind = value("removeInfoKind");
+      form.corrections = getCorrections();
+      return form;
+    }
+
+    function renderResults(summary) {
+      const resultsArea = document.getElementById("resultsArea");
+      if (!summary.results.length) {
+        resultsArea.className = "small subtle";
+        resultsArea.innerHTML = "Choose a correction type and the helper will show the instructions based on the official form logic.";
+      } else {
+        resultsArea.className = "small";
+        resultsArea.innerHTML = summary.results.map(result => `
+          <div class="result-box">
+            <h3>${escapeHtml(result.title)}</h3>
+            <ol>${result.steps.map(step => `<li>${escapeHtml(step)}</li>`).join("")}</ol>
+            ${result.docs.length ? `
+              <div style="margin-top:12px;">
+                <strong>Supporting documents</strong>
+                ${result.docs.map(docId => `
+                  <div class="doc-box">
+                    <strong>Document ${escapeHtml(docId)}</strong><br>
+                    ${escapeHtml(documentDescriptions[docId] || "")}
+                  </div>
+                `).join("")}
+              </div>` : ""}
+          </div>
+        `).join("");
+      }
+
+      document.getElementById("feeBox").innerHTML = `
+        <div style="display:flex; justify-content:space-between;"><span>Processing fee</span><strong>$${summary.fees.processingFee}</strong></div>
+        <div style="display:flex; justify-content:space-between; margin-top:6px;"><span>Certificate fee</span><strong>$${summary.fees.certificateFee}</strong></div>
+        <div style="display:flex; justify-content:space-between; margin-top:12px; padding-top:12px; border-top:1px solid var(--line);"><span>Total</span><strong>$${summary.fees.totalFee}</strong></div>
+      `;
+
+      document.getElementById("notesArea").innerHTML = summary.notes.map(note => `<li>${escapeHtml(note)}</li>`).join("");
+      renderPrintSummary(summary);
+    }
+
+    function renderPrintSummary(summary) {
+      const f = summary.form;
+      document.getElementById("printSummary").innerHTML = `
+        <div class="print-block">
+          <h1>Birth Certificate Correction Print Summary</h1>
+          <p style="margin-top:8px;">This printout summarizes the answers entered on the website and the instructions that appear to apply based on the official NYC correction form.</p>
+        </div>
+
+        <div class="print-block">
+          <h2>Applicant</h2>
+          <p><strong>Name:</strong> ${escapeHtml(fullName([f.applicantFirstName, f.applicantMiddleName, f.applicantLastName]))}</p>
+          <p><strong>Address:</strong> ${escapeHtml([f.mailingAddress, f.apartmentNumber, f.city, f.state, f.zipCode].filter(Boolean).join(", ") || "—")}</p>
+          <p><strong>Primary phone:</strong> ${escapeHtml(f.primaryPhone || "—")}</p>
+          <p><strong>Alternate phone:</strong> ${escapeHtml(f.alternatePhone || "—")}</p>
+          <p><strong>Email:</strong> ${escapeHtml(f.email || "—")}</p>
+          <p><strong>Marital partnership status:</strong> ${escapeHtml(f.maritalStatus || "—")}</p>
+        </div>
+
+        <div class="print-block">
+          <h2>Birth certificate details</h2>
+          <p><strong>Certificate number:</strong> ${escapeHtml(f.certificateNumber || "—")}</p>
+          <p><strong>Name currently on certificate:</strong> ${escapeHtml(fullName([f.certFirstName, f.certMiddleName, f.certLastName]))}</p>
+          <p><strong>Date of birth:</strong> ${escapeHtml(formatDate(f.dateOfBirth))}</p>
+          <p><strong>Sex:</strong> ${escapeHtml(f.sex || "—")}</p>
+          <p><strong>Mother's maiden name:</strong> ${escapeHtml(fullName([f.motherFirstName, f.motherLastName]))}</p>
+          <p><strong>Place of birth as shown:</strong> ${escapeHtml(f.placeOfBirth || "—")}</p>
+        </div>
+
+        <div class="print-block">
+          <h2>Requested correction(s)</h2>
+          ${f.corrections.map((line, index) => `
+            <div class="print-line">
+              <p><strong>Correction ${index + 1}:</strong> ${escapeHtml(line.field || "—")}</p>
+              <p><strong>Currently listed:</strong> ${escapeHtml(line.currentValue || "—")}</p>
+              <p><strong>Should say:</strong> ${escapeHtml(line.newValue || "—")}</p>
+            </div>
+          `).join("")}
+        </div>
+
+        ${summary.results.length ? `
+          <div class="print-block">
+            <h2>Instructions and supporting documents</h2>
+            ${summary.results.map(result => `
+              <div style="margin-top:12px;">
+                <h3>${escapeHtml(result.title)}</h3>
+                <ol>${result.steps.map(step => `<li>${escapeHtml(step)}</li>`).join("")}</ol>
+                ${result.docs.length ? result.docs.map(docId => `<p><strong>Document ${escapeHtml(docId)}:</strong> ${escapeHtml(documentDescriptions[docId] || "")}</p>`).join("") : ""}
+              </div>
+            `).join("")}
+          </div>` : ""}
+
+        <div class="print-block">
+          <h2>Fee summary</h2>
+          <p><strong>Processing fee:</strong> $${summary.fees.processingFee}</p>
+          <p><strong>Certificate fee:</strong> $${summary.fees.certificateFee}</p>
+          <p><strong>Total estimate:</strong> $${summary.fees.totalFee}</p>
+        </div>
+
+        <div class="print-block">
+          <h2>Signatures entered</h2>
+          <p><strong>Mother/parent/legal guardian:</strong> ${escapeHtml(f.signerMotherParentGuardian || "—")}</p>
+          <p><strong>Father/parent/legal guardian:</strong> ${escapeHtml(f.signerFatherParentGuardian || "—")}</p>
+          <p><strong>Person completing application:</strong> ${escapeHtml(f.signerApplicant || "—")}</p>
+          <p><strong>Adult requesting own correction:</strong> ${escapeHtml(f.signerAdultPerson || "—")}</p>
+          <p><strong>Date:</strong> ${escapeHtml(formatDate(f.signatureDate))}</p>
+        </div>
+      `;
+    }
+
+    function updateEverything() {
+      renderConditionalFields();
+      renderResults(computeInstructions());
+    }
+
+    function attachLiveListeners(root = document) {
+      root.querySelectorAll("input, select, textarea").forEach(el => {
+        el.removeEventListener("input", updateEverything);
+        el.removeEventListener("change", updateEverything);
+        el.addEventListener("input", updateEverything);
+        el.addEventListener("change", updateEverything);
+      });
+    }
+
+    function resetAll() {
+      document.querySelectorAll("input, select, textarea").forEach(el => {
+        if (el.type === "checkbox") el.checked = false;
+        else el.value = "";
+      });
+      document.getElementById("copiesRequested").value = "0";
+      document.getElementById("correctionsContainer").innerHTML = "";
+      addCorrectionLine();
+      updateEverything();
+    }
+
+    document.getElementById("addCorrectionBtn").addEventListener("click", () => addCorrectionLine());
+    document.getElementById("printBtn").addEventListener("click", () => window.print());
+    document.getElementById("resetBtn").addEventListener("click", resetAll);
+
+    attachLiveListeners();
+    addCorrectionLine();
+    updateEverything();
+  </script>
+</body>
+</html>
